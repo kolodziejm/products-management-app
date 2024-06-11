@@ -1,9 +1,269 @@
 ﻿@page "/"
+@using BlazorApp.Models
+@using BlazorApp.Models.Enums
+@using BlazorApp.Repositories
+@rendermode InteractiveServer
 
-<PageTitle>Home</PageTitle>
+<h3 class="mb-3">System zarządzania flotą</h3>
 
-<h1>Hello, world!!</h1>
+<form @onsubmit="OnFormSubmit" class="w-50 mb-5">
+    <div class="btn-group btn-group-toggle" data-toggle="buttons">
+        <label class="btn btn-secondary active">
+            <input type="radio" name="categories" id="economy" autocomplete="off" checked="@(formCategory == VehicleCategory.Economy)" @onclick="() => UpdateForm(VehicleCategory.Economy)"> Economy
+        </label>
+        
+        <label class="btn btn-secondary">
+            <input type="radio" name="categories" id="sports" autocomplete="off" checked="@(formCategory == VehicleCategory.Sports)" @onclick="() => UpdateForm(VehicleCategory.Sports)"> Sportowe
+        </label>
+        
+        <label class="btn btn-secondary">
+            <input type="radio" name="categories" id="suv" autocomplete="off" checked="@(formCategory == VehicleCategory.Suv)" @onclick="() => UpdateForm(VehicleCategory.Suv)"> SUV
+        </label>
+    </div>
+    
+    <br/>
+    
+    @if (vehicleForm != null)
+    {
+        <label for="make">Marka</label>
+        <input id="make" type="text" @bind="vehicleForm.Make" required class="form-control form-control-sm"/>
 
-<p>Dupa 123</p>
+        <label for="model">Model</label>
+        <input id="model" type="text" @bind="vehicleForm.Model" required class="form-control form-control-sm"/>
 
-Welcome to your new app.
+        <label for="color">Kolor</label>
+        <input id="color" type="text" @bind="vehicleForm.Colour" required class="form-control form-control-sm"/>
+        
+        <label for="vin">VIN</label>
+        <input id="vin" type="text" @bind="vehicleForm.Vin" required class="form-control form-control-sm"/>
+        
+        <label for="mileage">Przebieg</label>
+        <input id="mileage" type="number" @bind="vehicleForm.Mileage" required class="form-control form-control-sm"/>
+
+        <p class="mb-0">Status</p>
+        <select @bind="vehicleForm.Status">
+            @foreach (var status in Enum.GetNames(typeof(VehicleStatus)))
+            {
+                <option value="@status">@status</option>
+            }
+        </select>
+        
+        <br/>
+        
+        @if (vehicleForm is EconomyCar economyCar)
+        {
+            <label for="fuel">Spalanie w litrach na 100 km</label>
+            <input id="fuel" type="number" step="any" @bind="economyCar.FuelEfficiency" required class="form-control form-control-sm"/>
+            
+            <label for="capacity">Ilość miejsc</label>
+            <input id="capacity" type="number" @bind="economyCar.PassengerCapacity" required class="form-control form-control-sm"/>
+            
+            <label for="trunk">Pojemność bagażnika w litrach</label>
+            <input id="trunk" type="number" @bind="economyCar.TrunkSpace" required class="form-control form-control-sm"/>
+        }
+        
+        @if (vehicleForm is SportsCar sportsCar)
+        {
+            <label for="horsepower">Moc (konie mechaniczne)</label>
+            <input id="horsepower" type="number" @bind="sportsCar.Horsepower" required class="form-control form-control-sm"/>
+            
+            <label for="topSpeed">Prędkość maksymalna (w km/h)</label>
+            <input id="topSpeed" type="number" @bind="sportsCar.TopSpeed" required class="form-control form-control-sm"/>
+            
+            <label for="acceleration">Przyspieszenie (0-100 km/h)</label>
+            <input id="acceleration" type="number" step="any" @bind="sportsCar.Acceleration" required class="form-control form-control-sm"/>
+        }
+        
+        @if (vehicleForm is SuvCar suvCar)
+        {
+            <label for="groundClearance">Prześwit</label>
+            <input id="groundClearance" type="number" @bind="suvCar.GroundClearance" required class="form-control form-control-sm"/>
+            
+            <label for="isFourWheelDrive">Napęd na cztery koła</label>
+            <input id="isFourWheelDrive" type="checkbox" @bind="suvCar.IsFourWheelDrive" class="form-control form-control-sm" />
+        }
+        
+        @if (formMode == FormMode.Edit)
+        {
+            <button type="button" @onclick="CancelEdit" class="btn btn-link">Anuluj</button>
+            <button type="submit" class="btn btn-primary">Zapisz zmiany</button>
+        }
+        
+        @if (formMode == FormMode.Add)
+        {
+            <button type="submit" class="btn btn-primary">Dodaj pojazd</button>
+        }
+
+    }
+</form>
+
+<ul class="list-group">
+    @foreach (var vehicle in VehiclesRepository.GetVehicles())
+    {
+        <li class="list-group-item">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <strong>@vehicle.Make @vehicle.Model</strong> - @vehicle.Status
+                    <br/>
+                    <small>VIN: @vehicle.Vin</small>
+                    <br/>
+                    <small>Przebieg: @vehicle.Mileage km</small>
+                    <br/>
+                    <small>Kategoria: @vehicle.Category</small>
+                    <br/>
+
+                    @if (vehicle is EconomyCar economyCar)
+                    {
+                        <small>Spalanie: @economyCar.FuelEfficiency l/100 km</small>
+                        <br/>
+                        <small>Ilość miejsc: @economyCar.PassengerCapacity</small>
+                        <br/>
+                        <small>Pojemność bagażnika: @economyCar.TrunkSpace l</small>
+                    }
+
+                    @if (vehicle is SportsCar sportsCar)
+                    {
+                        <small>Moc: @sportsCar.Horsepower KM</small>
+                        <br/>
+                        <small>Prędkość maksymalna: @sportsCar.TopSpeed km/h</small>
+                        <br/>
+                        <small>Przyspieszenie: @sportsCar.Acceleration s</small>
+                    }
+
+                    @if (vehicle is SuvCar suvCar)
+                    {
+                        <small>Prześwit: @suvCar.GroundClearance cm</small>
+                        <br/>
+                        <small>Napęd na cztery koła: @suvCar.IsFourWheelDrive</small>
+                    }
+                </div>
+                
+                <div>
+                    <button class="btn btn-outline-dark" @onclick="() => EditVehicle(vehicle)">Edytuj</button>
+                    <button class="btn btn-outline-danger" @onclick="() => DeleteVehicle(vehicle)">Usuń</button>
+                </div>
+            </div>
+        </li>
+    }
+</ul>
+
+@code {
+    private enum FormMode
+    {
+        Add,
+        Edit
+    };
+    
+    private FormMode formMode = FormMode.Add;
+    
+    private VehicleCategory formCategory = VehicleCategory.Economy;
+    
+    private Vehicle? vehicleForm = new EconomyCar();
+    
+    private void UpdateForm(VehicleCategory category)
+    {
+        formCategory = category;
+        
+        switch (formCategory)
+        {
+            case VehicleCategory.Economy:
+                vehicleForm = new EconomyCar();
+                break;
+            case VehicleCategory.Sports:
+                vehicleForm = new SportsCar();
+                break;
+            case VehicleCategory.Suv:
+                vehicleForm = new SuvCar();
+                break;
+        }
+    }
+    
+    private void OnFormSubmit()
+    {
+        if (vehicleForm == null)
+        {
+            return;
+        }
+        
+        if (formMode == FormMode.Add)
+        {
+            VehiclesRepository.AddVehicle(vehicleForm);
+        }
+        else
+        {
+            VehiclesRepository.UpdateVehicle(vehicleForm);
+        }
+        
+        vehicleForm = new EconomyCar();
+        formMode = FormMode.Add;
+    }
+    
+    private void EditVehicle(Vehicle vehicle)
+    {
+        formMode = FormMode.Edit;
+        
+        if (vehicle is EconomyCar economyCar)
+        {
+            formCategory = VehicleCategory.Economy;
+            vehicleForm = new EconomyCar
+            {
+                Id = vehicle.Id,
+                Make = economyCar.Make,
+                Model = economyCar.Model,
+                Colour = economyCar.Colour,
+                Vin = economyCar.Vin,
+                Mileage = economyCar.Mileage,
+                Status = economyCar.Status,
+                FuelEfficiency = economyCar.FuelEfficiency,
+                PassengerCapacity = economyCar.PassengerCapacity,
+                TrunkSpace = economyCar.TrunkSpace
+            };
+        }
+        
+        if (vehicle is SportsCar sportsCar)
+        {
+            formCategory = VehicleCategory.Sports;
+            vehicleForm = new SportsCar
+            {
+                Id = vehicle.Id,
+                Make = sportsCar.Make,
+                Model = sportsCar.Model,
+                Colour = sportsCar.Colour,
+                Vin = sportsCar.Vin,
+                Mileage = sportsCar.Mileage,
+                Status = sportsCar.Status,
+                Horsepower = sportsCar.Horsepower,
+                TopSpeed = sportsCar.TopSpeed,
+                Acceleration = sportsCar.Acceleration
+            };
+        }
+        
+        if (vehicle is SuvCar suvCar)
+        {
+            formCategory = VehicleCategory.Suv;
+            vehicleForm = new SuvCar
+            {
+                Id = vehicle.Id,
+                Make = suvCar.Make,
+                Model = suvCar.Model,
+                Colour = suvCar.Colour,
+                Vin = suvCar.Vin,
+                Mileage = suvCar.Mileage,
+                Status = suvCar.Status,
+                GroundClearance = suvCar.GroundClearance,
+                IsFourWheelDrive = suvCar.IsFourWheelDrive
+            };
+        }
+    }
+    
+    private void CancelEdit()
+    {
+        vehicleForm = new EconomyCar();
+        formMode = FormMode.Add;
+    }
+    
+    private void DeleteVehicle(Vehicle vehicle)
+    {
+        VehiclesRepository.DeleteVehicle(vehicle);
+    }
+}
