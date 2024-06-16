@@ -38,7 +38,7 @@
         <input id="vin" type="text" @bind="vehicleForm.Vin" required class="form-control form-control-sm"/>
         
         <label for="mileage">Przebieg</label>
-        <input id="mileage" type="number" @bind="vehicleForm.Mileage" required class="form-control form-control-sm"/>
+        <input id="mileage" type="number" @bind="vehicleForm.Mileage" required class="form-control form-control-sm" min="0"/>
 
         <p class="mb-0">Status</p>
         <select @bind="vehicleForm.Status">
@@ -80,8 +80,10 @@
             <input id="groundClearance" type="number" @bind="suvCar.GroundClearance" required class="form-control form-control-sm"/>
             
             <label for="isFourWheelDrive">Napęd na cztery koła</label>
-            <input id="isFourWheelDrive" type="checkbox" @bind="suvCar.IsFourWheelDrive" class="form-control form-control-sm" />
+            <input id="isFourWheelDrive" type="checkbox" @bind="suvCar.IsFourWheelDrive" />
         }
+        
+        <br/>
         
         @if (formMode == FormMode.Edit)
         {
